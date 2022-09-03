@@ -23,6 +23,7 @@ public class Compilador extends JFrame implements ActionListener {
     JMenuItem mniAbrir, mniImprimirG, mniScan, mniParse, mniLimpiar;
     JTextArea txtPrograma, txtTokens, txtMensaje;
     JScrollPane scPrograma, scMensaje, scTokens;
+    JLabel lblPrograma, lblMensaje;
     CommonTokenStream tokens;
     InterpreterParser parser;
     InterpreterLexer lexer;
@@ -83,6 +84,14 @@ public class Compilador extends JFrame implements ActionListener {
 
         mniParse = new JMenuItem("Analizar sintaxis");
         mnParser.add(mniParse);
+
+        lblPrograma = new JLabel("Programa:");
+        lblPrograma.setBounds(30, 15, 100, 15);
+        add(lblPrograma);
+
+        lblMensaje = new JLabel("Output:");
+        lblMensaje.setBounds(30, 435, 100, 15);
+        add(lblMensaje);
 
         txtPrograma = new JTextArea();
         scPrograma = new JScrollPane(txtPrograma);
