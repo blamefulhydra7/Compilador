@@ -1,0 +1,13 @@
+int norma = 1;
+norma = norma + 1;
+if (norma >= 10)
+{
+    norma = norma - 1;
+    int leo = 123;
+    if (leo == 10)
+    {
+        int kevin = 5;
+        norma = kevin;
+    }
+}
+print norma;

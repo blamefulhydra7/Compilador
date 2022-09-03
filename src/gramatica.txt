@@ -1,0 +1,29 @@
+regla : sentencias+ EOF;
+
+sentencias : declaracion | condicionIf | operacion | imprimir;
+
+declaracion : TipoDato Identificador Igual Digitos PuntoComa ;
+
+condicionIf : If ParentesisA Identificador OperadorLogico (Identificador | Digitos) ParentesisB LlaveA sentencias* LlaveB;
+
+operacion :  Identificador Igual (auxOp | operacionAritmetica) PuntoComa;
+
+operacionAritmetica : auxOp OperadorAritmetico (Identificador | Digitos);
+
+imprimir : Print Identificador PuntoComa;
+
+auxOp :	Identificador| Digitos;
+
+If : 'if';
+TipoDato : 'int';
+Print : 'print';
+Igual : '=';
+ParentesisA : '(';
+ParentesisB : ')';
+LlaveA : '{';
+LlaveB : '}';
+PuntoComa : ';';
+OperadorLogico : '==' | '!=' | '>=' | '<=' | '<' | '>';
+OperadorAritmetico : '+' | '-' | '/' | '*';
+Identificador: [a-zA-Z_][a-zA-Z0-9_]+;
+Digitos : [0-9]+;
