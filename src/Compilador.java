@@ -122,24 +122,6 @@ public class Compilador extends JFrame implements ActionListener {
         mniImprimirG.addActionListener(this);
     }
 
-    private void antlr()
-    {
-        try {
-            InterpreterLexer lexer = new InterpreterLexer(new ANTLRFileStream("norma.txt"));
-            InterpreterParser parser = new InterpreterParser(new CommonTokenStream(lexer));
-            InterpreterParser.ReglaContext tree = parser.regla();
-            InterpreterBaseVisitor visitor = new InterpreterBaseVisitor();
-            visitor.visit(tree);
-
-            System.out.println("My parser has executed Order 66");
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-        } finally {
-            System.exit(0);
-        }
-    }
-
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == mniAbrir)
