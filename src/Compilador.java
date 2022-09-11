@@ -182,6 +182,7 @@ public class Compilador extends JFrame implements ActionListener {
             finally {
                 txtTokens.setText(lexer.tokens);
             }
+            return;
         }
         if (e.getSource() == mniParse)
         {
@@ -195,13 +196,15 @@ public class Compilador extends JFrame implements ActionListener {
             try {
                 CharStream in = CharStreams.fromString(txtPrograma.getText());
                 lexer = new InterpreterLexer(in);
-                lexer.addErrorListener(errores);
+                lexer.removeErrorListeners();
                 tokens = new CommonTokenStream(lexer);
                 parser = new InterpreterParser(tokens);
+                parser.removeErrorListeners();
                 parser.addErrorListener(errores);
                 InterpreterParser.ReglaContext tree = parser.regla();
                 InterpreterBaseVisitor<Object> visitor = new InterpreterBaseVisitor<>();
                 visitor.visit(tree);
+                txtMensaje.setText("Análisis correcto.");
             }
             catch (ParseCancellationException ex)
             {
@@ -209,7 +212,11 @@ public class Compilador extends JFrame implements ActionListener {
             }
             finally {
                 txtTokens.setText(lexer.tokens + "\n" + parser.mapa.imprimirMapa());
+
+                if (!parser.mapa.errores.equals(""))
+                    txtMensaje.setText(parser.mapa.errores);
             }
+            return;
         }
         if (e.getSource() == mniLimpiar)
         {

@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 public class Mapa {
     private HashMap<String, Simbolo> mapa;
+    public String errores = "";
 
     public Mapa()
     {
@@ -20,7 +21,7 @@ public class Mapa {
         }
         else
         {
-            System.err.println("Se intentó añadir un símbolo ya existente: " + sim.getNombre());
+            errores += "\nSe intentó añadir un símbolo ya existente: " + sim.getNombre();
             return false;
         }
     }
@@ -34,7 +35,7 @@ public class Mapa {
         }
         else if (!existe(sim.getNombre()))
         {
-            System.err.println("Se intentó modificar un símbolo inexistente: " + sim.getNombre());
+            errores += "\nSe intentó modificar un símbolo inexistente: " + sim.getNombre();
             return false;
         }
         return false;
@@ -49,7 +50,7 @@ public class Mapa {
     {
         if (existe(key))
             return mapa.get(key);
-        System.err.println("Se intentó recuperar un símbolo inexistente: " + key);
+        errores += "\nSe intentó recuperar un símbolo inexistente: " + key;
         return null;
     }
 
