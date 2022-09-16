@@ -2,6 +2,7 @@ grammar Interpreter;
 @parser::header{
 	import recursos.Simbolo;
 	import recursos.Mapa;
+	import java.util.InputMismatchException;
 }
 @lexer::members{
 	public String tokens = "\tTokens\n";
@@ -102,7 +103,7 @@ auxOp returns [Object identificador]:
 ;
 
 If : 'if' {tokens = tokens + getText() + "\tIf\n";};
-TipoDato : 'int' {tokens = tokens + getText() + "\tTipo de dato\n";};
+TipoDato : 'int' | 'boolean' {tokens = tokens + getText() + "\tTipo de dato\n";};
 Print : 'print' {tokens = tokens + getText() + "\tPrint\n";};
 Igual : '=' {tokens = tokens + getText() + "\tIgual\n";};
 ParentesisA : '(' {tokens = tokens + getText() + "\tParéntesis apertura\n";};
@@ -114,4 +115,5 @@ OperadorLogico : '==' | '!=' | '>=' | '<=' | '<' | '>' {tokens = tokens + getTex
 OperadorAritmetico : '+' | '-' | '/' | '*' {tokens = tokens + getText() + "\tOperador Aritmético\n";};
 Identificador: [a-zA-Z_]([a-zA-Z0-9_])* {tokens = tokens + getText() + "\tIdentificador\n";};
 Digitos : [0-9]+ {tokens = tokens + getText() + "\tDigitos\n";};
+Bools : 'true' | 'false';
 WHITE_SPACE : [ \t\r\n]+ -> skip;
