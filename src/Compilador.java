@@ -97,7 +97,6 @@ public class Compilador extends JFrame implements ActionListener {
 
         txtMensaje = new JTextArea();
         txtMensaje.setEditable(false);
-        txtMensaje.setForeground(Color.red);
         scMensaje = new JScrollPane(txtMensaje);
         scMensaje.setBounds(30, 450, 525, 100);
 
@@ -119,7 +118,6 @@ public class Compilador extends JFrame implements ActionListener {
         mniAbrir.addActionListener(this);
         mniImprimirG.addActionListener(this);
     }
-
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == mniAbrir)
@@ -176,10 +174,12 @@ public class Compilador extends JFrame implements ActionListener {
                 InterpreterBaseVisitor<Object> visitor = new InterpreterBaseVisitor<>();
                 visitor.visit(tree);
                 txtMensaje.setText("Análisis correcto.");
+                txtMensaje.setForeground(Color.green);
             }
             catch (ParseCancellationException ex)
             {
                 txtMensaje.setText(errores.getErrorInfo());
+                txtMensaje.setForeground(Color.red);
             }
             finally {
                 txtTokens.setText(lexer.tokens);
@@ -191,6 +191,7 @@ public class Compilador extends JFrame implements ActionListener {
             if (txtPrograma.getText().trim().equals(""))
             {
                 txtMensaje.setText("No escribió nada en el texto del programa.");
+                txtMensaje.setForeground(Color.red);
                 return;
             }
             txtTokens.setText("");
@@ -208,16 +209,19 @@ public class Compilador extends JFrame implements ActionListener {
                 InterpreterBaseVisitor<Object> visitor = new InterpreterBaseVisitor<>();
                 visitor.visit(tree);
                 txtMensaje.setText("Análisis correcto.");
+                txtMensaje.setForeground(Color.green);
             }
             catch (ParseCancellationException ex)
             {
                 txtMensaje.setText(errores.getErrorInfo());
+                txtMensaje.setForeground(Color.red);
             }
             finally {
                 txtTokens.setText(lexer.tokens + "\n" + parser.mapa.imprimirMapa());
                 if(!parser.mapa.errores.equals(""))
                 {
                     txtMensaje.setText(errores.getErrorInfo() + "\n" + parser.mapa.errores);
+                    txtMensaje.setForeground(Color.red);
                 }
             }
             return;
