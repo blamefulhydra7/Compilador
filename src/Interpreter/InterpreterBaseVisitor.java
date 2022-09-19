@@ -3,6 +3,7 @@ package Interpreter;
 
 	import recursos.Simbolo;
 	import recursos.Mapa;
+	import java.util.InputMismatchException;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -71,4 +72,11 @@ public class InterpreterBaseVisitor<T> extends AbstractParseTreeVisitor<T> imple
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
 	@Override public T visitAuxOp(InterpreterParser.AuxOpContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitAuxOpB(InterpreterParser.AuxOpBContext ctx) { return visitChildren(ctx); }
 }

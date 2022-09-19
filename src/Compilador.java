@@ -1,10 +1,7 @@
 import Interpreter.InterpreterBaseVisitor;
 import Interpreter.InterpreterLexer;
 import Interpreter.InterpreterParser;
-import org.antlr.v4.runtime.ANTLRFileStream;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.*;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
 import javax.swing.*;
@@ -16,6 +13,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.InputMismatchException;
 
 public class Compilador extends JFrame implements ActionListener {
     JMenuBar barra;
@@ -146,7 +144,7 @@ public class Compilador extends JFrame implements ActionListener {
             txtMensaje.setText("");
             mnParser.setEnabled(false);
             mnScanner.setEnabled(false);
-            File archivo = new File("C:\\Users\\Leonardo\\IdeaProjects\\Analizador\\src\\gramatica.txt");
+            File archivo = new File("./src/gramatica.txt");
             try {
                 String ST = new String(Files.readAllBytes(archivo.toPath()));
                 txtPrograma.setText(ST);
@@ -165,15 +163,19 @@ public class Compilador extends JFrame implements ActionListener {
             }
             txtTokens.setText("");
             txtMensaje.setText("");
+            errores.clean();
             try {
                 CharStream in = CharStreams.fromString(txtPrograma.getText());
                 lexer = new InterpreterLexer(in);
+                lexer.removeErrorListeners();
                 lexer.addErrorListener(errores);
                 tokens = new CommonTokenStream(lexer);
                 parser = new InterpreterParser(tokens);
+                parser.removeErrorListeners();
                 InterpreterParser.ReglaContext tree = parser.regla();
                 InterpreterBaseVisitor<Object> visitor = new InterpreterBaseVisitor<>();
                 visitor.visit(tree);
+                txtMensaje.setText("Análisis correcto.");
             }
             catch (ParseCancellationException ex)
             {
@@ -193,6 +195,7 @@ public class Compilador extends JFrame implements ActionListener {
             }
             txtTokens.setText("");
             txtMensaje.setText("");
+            errores.clean();
             try {
                 CharStream in = CharStreams.fromString(txtPrograma.getText());
                 lexer = new InterpreterLexer(in);
@@ -212,9 +215,10 @@ public class Compilador extends JFrame implements ActionListener {
             }
             finally {
                 txtTokens.setText(lexer.tokens + "\n" + parser.mapa.imprimirMapa());
-
-                if (!parser.mapa.errores.equals(""))
-                    txtMensaje.setText(parser.mapa.errores);
+                if(!parser.mapa.errores.equals(""))
+                {
+                    txtMensaje.setText(errores.getErrorInfo() + "\n" + parser.mapa.errores);
+                }
             }
             return;
         }

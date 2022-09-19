@@ -21,22 +21,21 @@ public class Mapa {
         }
         else
         {
-            errores += "\nSe intentó añadir un símbolo ya existente: " + sim.getNombre();
             return false;
         }
     }
 
     public boolean modificarSimbolo(Simbolo sim)
     {
-        if(existe(sim.getNombre()) && sim.getValor() != -1)
+        if(sim.getValor() > 0)
         {
             mapa.replace(sim.getNombre(), sim);
             return true;
         }
-        else if (!existe(sim.getNombre()))
+        else if (sim.getTipo() == 2)
         {
-            errores += "\nSe intentó modificar un símbolo inexistente: " + sim.getNombre();
-            return false;
+            mapa.replace(sim.getNombre(), sim);
+            return true;
         }
         return false;
     }
@@ -50,7 +49,6 @@ public class Mapa {
     {
         if (existe(key))
             return mapa.get(key);
-        errores += "\nSe intentó recuperar un símbolo inexistente: " + key;
         return null;
     }
 
@@ -60,8 +58,13 @@ public class Mapa {
         String tabla = "Tabla de símbolos\n";
 
         for (Simbolo simbolo : simbolos) {
-            tabla = tabla + String.format("Nombre: %s\t\tValor: %d\n", simbolo.getNombre(), simbolo.getValor());
+            tabla = tabla + String.format("Nombre: %s\tValor: %s\tTipo: %s\n", simbolo.getNombre(), (simbolo.getTipo() == 1) ? simbolo.getValor() + "" : simbolo.isValorB() + "", (simbolo.getTipo() == 1) ? "Integer" : "Boolean");
         }
         return tabla;
+    }
+
+    public void addError(String error)
+    {
+        errores += "\n" + error;
     }
 }

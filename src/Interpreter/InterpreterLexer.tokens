@@ -9,11 +9,11 @@ LlaveB=8
 PuntoComa=9
 OperadorLogico=10
 OperadorAritmetico=11
-Identificador=12
-Digitos=13
-WHITE_SPACE=14
+Bools=12
+Identificador=13
+Digitos=14
+WHITE_SPACE=15
 'if'=1
-'int'=2
 'print'=3
 '='=4
 '('=5

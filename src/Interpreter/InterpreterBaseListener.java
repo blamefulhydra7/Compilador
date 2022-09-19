@@ -3,6 +3,7 @@ package Interpreter;
 
 	import recursos.Simbolo;
 	import recursos.Mapa;
+	import java.util.InputMismatchException;
 
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -111,6 +112,18 @@ public class InterpreterBaseListener implements InterpreterListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitAuxOp(InterpreterParser.AuxOpContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterAuxOpB(InterpreterParser.AuxOpBContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitAuxOpB(InterpreterParser.AuxOpBContext ctx) { }
 
 	/**
 	 * {@inheritDoc}

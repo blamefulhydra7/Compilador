@@ -2,20 +2,22 @@ regla : sentencias+ EOF;
 
 sentencias : declaracion | condicionIf | operacion | imprimir;
 
-declaracion : TipoDato Identificador Igual Digitos PuntoComa ;
+declaracion: TipoDato Identificador Igual (Digitos | Bools ) PuntoComa;
 
-condicionIf : If ParentesisA Identificador OperadorLogico (Identificador | Digitos) ParentesisB LlaveA sentencias* LlaveB;
+condicionIf : If ParentesisA (auxOp | auxOp OperadorLogico auxOpB ) ParentesisB LlaveA sentencias* LlaveB;
 
-operacion :  Identificador Igual (auxOp | operacionAritmetica) PuntoComa;
+operacion :  Identificador Igual  (auxOp | operacionAritmetica ) PuntoComa;
 
-operacionAritmetica : auxOp OperadorAritmetico (Identificador | Digitos);
+operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Identificador | Digitos );
 
 imprimir : Print Identificador PuntoComa;
 
-auxOp :	Identificador| Digitos;
+auxOp returns [Object identificador[]]: Identificador | Digitos | Bools;
+
+auxOpB returns [Object identificador[]]: Identificador | Digitos | Bools;
 
 If : 'if';
-TipoDato : 'int';
+TipoDato : 'int' | 'boolean';
 Print : 'print';
 Igual : '=';
 ParentesisA : '(';
@@ -25,5 +27,7 @@ LlaveB : '}';
 PuntoComa : ';';
 OperadorLogico : '==' | '!=' | '>=' | '<=' | '<' | '>';
 OperadorAritmetico : '+' | '-' | '/' | '*';
-Identificador: [a-zA-Z_][a-zA-Z0-9_]+;
+Bools : 'true' | 'false';
+Identificador: [a-zA-Z_]([a-zA-Z0-9_])*;
 Digitos : [0-9]+;
+WHITE_SPACE : [ \t\r\n]+ -> skip;

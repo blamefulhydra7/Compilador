@@ -3,6 +3,7 @@ package Interpreter;
 
 	import recursos.Simbolo;
 	import recursos.Mapa;
+	import java.util.InputMismatchException;
 
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 
@@ -91,4 +92,14 @@ public interface InterpreterListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitAuxOp(InterpreterParser.AuxOpContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link InterpreterParser#auxOpB}.
+	 * @param ctx the parse tree
+	 */
+	void enterAuxOpB(InterpreterParser.AuxOpBContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link InterpreterParser#auxOpB}.
+	 * @param ctx the parse tree
+	 */
+	void exitAuxOpB(InterpreterParser.AuxOpBContext ctx);
 }

@@ -16,4 +16,9 @@ public class ErrorCatcher extends BaseErrorListener {
     public String getErrorInfo() {
         return errorInfo;
     }
+
+    public void clean()
+    {
+        errorInfo = "";
+    }
 }
