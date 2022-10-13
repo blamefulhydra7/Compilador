@@ -13,6 +13,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.InputMismatchException;
 
 public class Compilador extends JFrame implements ActionListener {
@@ -26,8 +27,8 @@ public class Compilador extends JFrame implements ActionListener {
     InterpreterParser parser;
     InterpreterLexer lexer;
     ErrorCatcher errores;
-
-    Intermedio codInt;
+    InterpreterParser producciones;
+    String codigo;
 
     public Compilador ()
     {
@@ -46,7 +47,6 @@ public class Compilador extends JFrame implements ActionListener {
         setLayout(null);
 
         errores = new ErrorCatcher();
-        codInt = new Intermedio();
 
         barra = new JMenuBar();
         setJMenuBar(barra);
@@ -247,8 +247,8 @@ public class Compilador extends JFrame implements ActionListener {
                     txtIntermedio.setText("NO SE INGRESO NUNGUN CODIGO");
                 }
                 else {
-                    txtIntermedio.setForeground(Color.black);
-                    txtIntermedio.setText(codInt.generadorCodigoIntermedio());
+                    txtIntermedio.setForeground(Color.BLACK);
+                    txtIntermedio.setText(generadorCodigoIntermedio());
                 }
 
             }
@@ -263,4 +263,163 @@ public class Compilador extends JFrame implements ActionListener {
             }
 
     }
+
+    public String generadorCodigoIntermedio()
+    {
+
+
+        codigo =
+                "\t .MODEL\t small\n" +
+                        ".DATA\n\n"
+                        + getTipoVariable() + "\n" +"\n"
+                        + ".CODE\n\n"
+                        + "Main\t PROC\n"
+                        + "\t  .STARTUP\n\n"
+                        + txtPrograma.getText()+"\n"+getProducciones()
+                        + "\n\nMain\t ENDP";
+        return codigo;
+    }
+
+    public String getTipoVariable() {
+        CharStream interM = CharStreams.fromString(txtPrograma.getText());
+        lexer = new InterpreterLexer(interM);
+        lexer.removeErrorListeners();
+        tokens = new CommonTokenStream(lexer);
+        parser = new InterpreterParser(tokens);
+        producciones = new InterpreterParser(tokens);
+        InterpreterParser.ReglaContext tree2 = parser.regla();
+        InterpreterBaseVisitor<Object> visitor2 = new InterpreterBaseVisitor<>();
+        visitor2.visit(tree2);
+
+        String tipoDato;
+        /*for(int i=0;i<=8;i++) {
+            if ( --tipodeDato == "Boolean")
+            {
+                tipoDato() = "DB\t"+valor;
+            }
+            } else if (--tipodeDato == "Int")
+            {
+               if(valor == 0)
+                {
+                    valor = "?"
+                    tipoDato() = "DB\t"+valor;
+                }
+                else
+                {
+                    tipoDato() = "DB\t"+valor
+                }
+            }
+        */
+            return tipoDato = "Hola";
+        }
+
+        public String getProducciones()
+    {
+            String produccion="";
+            //Codigo prueba, el original esta comentado debajo de este
+
+        if(txtPrograma.getText().equals("if"))
+        {
+            produccion="\t;IF\n"+"If:";
+                    //condicion a pensarse pero son uso de JMP, JPZ, JPE
+        }
+        else if(txtPrograma.getText().equals("*"))
+    {
+        produccion="\t;MULTIPLICACION\n"+
+                "MOV\tEAX,valor1"+
+                "\nMOV\tEBX,valor2\n"+
+                "IMUL\tEBX\n"+
+                "MOV\tResultado,EAX\n\n";
+    }
+    else if(txtPrograma.getText().equals("/"))
+    {
+        produccion="\t;DIVISION\n"+
+                "MOV\tEAX,valor1"+
+                "\nMOV\tEBX,valor2\n"+
+                "IDIV\tEBX\n"+
+                "MOV\tResultado,EAX\n\n";
+
+    } else if(txtPrograma.getText().equals("+"))
+    {
+        produccion="\t;SUMA\n"+
+                "MOV\tEAX,valor1"+
+                "\nIADD\tEAX,valor2\n"+
+                "MOV\tResultado,EAX\n\n";
+    }
+    else if(txtPrograma.getText().equals("-"))
+    {
+        produccion="\t;RESTA\n"+
+                "MOV\tEAX,valor1"+
+                "\nISUB\tEAX,valor2\n"+
+                "MOV\tResultado,EAX\n\n";
+    }
+    else if(txtPrograma.getText().equals("="))
+    {
+        produccion ="\t;ADJUDICACION DE VALOR\n"+
+                "MOV\tECX,a\n\n";
+    }
+    else if(txtPrograma.getText().equals("print") /*&& condiciones entreparentesis*/)
+        {
+            produccion="\t;IMPRIMIR\n"+
+                    "MOV\tAH,09H\n"
+                    +"LEA\tdx,texto"
+                    +"\nint\t21H\n\n";
+
+        }
+       /*
+       do {
+       if(tokenTipe.equals("if")&& condiciones entreparentesis)
+       {
+       produccion="\t;IF\n"+
+            condicion a pensarse pero son uso de JMP, JPZ, JPE
+       }
+       else if(tokenTipe.equals("*"))
+        {
+          produccion="\t;MULTIPLICACION\n"+
+            "MOV\tEAX,"+valor1
+            "\nMOV\t EBX,"+valor2+"\n"+
+             "IMUL\tEBX\n"+
+             "MOV\t"+Resultado+",EAX\n\n";
+        }
+        else if(tokenTipe.equals("/"))
+        {
+        produccion="\t;DIVISION\n"+
+            "MOV\tEAX,"+valor1
+            "\nMOV\t EBX,"+valor2+"\n"+
+             "IDIV\tEBX\n"+
+             "MOV\t"+Resultado+",EAX\n\n";
+
+        } else if(tokenTipe.equals("+"))
+        {
+        produccion="\t;SUMA\n"+
+            "MOV\tEAX,"+valor1
+            "\nIADD\t EAX,"+valor2+"\n"+
+             "MOV\t"+Resultado+",EAX\n\n";
+        }
+        else if(tokenTipe.equals("-"))
+        {
+        produccion="\t;RESTA\n"+
+            "MOV\tEAX,"+valor1
+            "\nISUB\t EAX,"+valor2+"\n"+
+             "MOV\t"+Resultado+",EAX\n\n";
+        }
+        else if(tokenTipe.equals("="))
+        {
+        PRODUCCION ="\t;ADJUDICACION DE VALOR\n"+
+            aun de pensarse se puede poner un switch case para asiganer desde EAX a EDX
+            produccion= "MOV\tECX,"+tokenName+"\n\n"
+        }
+        else if(tokenTipe.equals("print") && condiciones entreparentesis)
+        {
+            produccion="\t;IMPRIMIR\n"+
+            "MOV\tAH,09H\n"
+            +"LEA\tdx,"+texto
+            +"\nint\t21H\n\n";
+
+        }
+        while(tokensN<getTokenNames().length());
+        */
+            return produccion;
+        }
+
 }

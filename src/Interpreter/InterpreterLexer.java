@@ -88,6 +88,7 @@ public class InterpreterLexer extends Lexer {
 		public String tokens = "\tTokens\n";
 
 
+
 	public InterpreterLexer(CharStream input) {
 		super(input);
 		_interp = new LexerATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
