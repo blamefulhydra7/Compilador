@@ -2,7 +2,6 @@ grammar Interpreter;
 @parser::header{
 	import recursos.Simbolo;
 	import recursos.Mapa;
-	import java.util.InputMismatchException;
 }
 @lexer::members{
 	public String tokens = "\tTokens\n";
@@ -11,6 +10,7 @@ grammar Interpreter;
 @parser::members{
     public Mapa mapa = new Mapa();
     private int tipoDato;
+    public String data = ".DATA\n", code = ".CODE\n";
 }
 
 regla : sentencias+ EOF;
@@ -25,6 +25,11 @@ declaracion:
             if(!mapa.agregarSimbolo(new Simbolo($Identificador.text, Integer.parseInt($Digitos.text))))
             {
                 mapa.addError("Attempted to add an already existing variable. Line: " + $Identificador.line);
+            }
+            else
+            {
+               data = data + $Identificador.text + "\tDW\t?\n";
+               code = code + "MOV " + $Identificador.text + ", " + $Digitos.text;
             }
         }
         else
@@ -76,7 +81,7 @@ condicionIf : If ParentesisA (
                 mapa.addError("Expecting Integer value, received Boolean. Line: " + $If.line);
             }
         }
-    }) ParentesisB LlaveA sentencias* LlaveB;
+    }) ParentesisB LlaveA sentencias* LlaveB {code = code + "ETIQUETA:\n"};
 
 operacion :  Identificador Igual
     (auxOp {
