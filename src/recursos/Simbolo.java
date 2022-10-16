@@ -5,15 +5,13 @@ public class Simbolo {
     private boolean valorB;
     private String nombre;
 
-    public Simbolo(String nombre, int valor)
-    {
+    public Simbolo(String nombre, int valor) {
         setNombre(nombre);
         setValor(valor);
         setTipo(1);
     }
 
-    public Simbolo(String nombre, boolean valor)
-    {
+    public Simbolo(String nombre, boolean valor) {
         setNombre(nombre);
         setValorB(valor);
         setTipo(2);

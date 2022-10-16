@@ -9,8 +9,10 @@ grammar Interpreter;
 
 @parser::members{
     public Mapa mapa = new Mapa();
-    private int tipoDato;
-    public String data = ".DATA\n", code = ".CODE\n";
+    private int tipoDato,nIf;
+    public String data = ".DATA\n\n", code = ".CODE\n\n"+ "Main\t PROC\n" + "\t  .STARTUP\n\n";
+    String[] identificadorN = new String[2];
+    int nId=0;
 }
 
 regla : sentencias+ EOF;
@@ -28,8 +30,8 @@ declaracion:
             }
             else
             {
-               data = data + $Identificador.text + "\tDW\t?\n";
-               code = code + "MOV " + $Identificador.text + ", " + $Digitos.text;
+                    data = data + $Identificador.text + "\tDW\t"+$Digitos.text+"\n";
+
             }
         }
         else
@@ -44,15 +46,20 @@ declaracion:
             {
                 mapa.addError("Attempted to add an already existing variable. Line: " + $Bools.line);
             }
+            else
+            {
+                data = data + $Identificador.text + "\tDB\t"+$Bools.text+"\n";
+
+            }
         }
         else
         {
             mapa.addError("Boolean value not compatible with Integer variable. Line: " + $Bools.line);
         }
     })
-    PuntoComa;
+    PuntoComa ;
 
-condicionIf : If ParentesisA (
+condicionIf : If{nIf++;} ParentesisA (
     auxOp
     {
         if(Integer.parseInt($auxOp.identificador[1] + "") > 0)
@@ -61,9 +68,14 @@ condicionIf : If ParentesisA (
             {
                 mapa.addError("Expecting boolean value, received Integer. Line: " + $If.line);
             }
+            else
+            {
+                code=code+"MOV\tEAX,"+$auxOp.text+
+                "\nCMP\t"+$auxOp.text+",EAX\n";
+            }
+
         }
-    }
-    | auxOp
+    }| auxOp
     {
         if(Integer.parseInt($auxOp.identificador[1] + "") > 0)
         {
@@ -71,17 +83,24 @@ condicionIf : If ParentesisA (
             {
                 mapa.addError("Expecting Integer value, received Boolean. Line: " + $If.line);
             }
+
         }
-    }OperadorLogico auxOpB
+    }
+    OperadorLogico auxOpB
     {
         if(Integer.parseInt($auxOpB.identificador[1] + "") > 0)
         {
             if(Integer.parseInt($auxOpB.identificador[1] + "") != 1)
             {
                 mapa.addError("Expecting Integer value, received Boolean. Line: " + $If.line);
+
+            }
+            else
+            {
+                code=code+"CMP "+$auxOp.text+","+$auxOpB.text+"\n";
             }
         }
-    }) ParentesisB LlaveA sentencias* LlaveB {code = code + "ETIQUETA:\n"};
+    }) ParentesisB{code = code + "JNE\tETIQUETA_"+nIf+"\n";} LlaveA sentencias* LlaveB {code = code + "ETIQUETA_"+nIf+":\n\n";};
 
 operacion :  Identificador Igual
     (auxOp {
@@ -92,6 +111,7 @@ operacion :  Identificador Igual
                 if(Integer.parseInt($auxOp.identificador[1] + "") == 1)
                 {
                     mapa.modificarSimbolo(new Simbolo($Identificador.text, Integer.parseInt($auxOp.identificador[0] + "")));
+                    code = code +"MOV\t"+$Identificador.text+","+$auxOp.text+"\n";
                 }
                 else
                 {
@@ -103,6 +123,14 @@ operacion :  Identificador Igual
                 if(Integer.parseInt($auxOp.identificador[1] + "") == 2)
                 {
                     mapa.modificarSimbolo(new Simbolo($Identificador.text, Boolean.parseBoolean($auxOp.identificador[0] + "")));
+                    if($auxOp.text.equals("true") | $auxOp.text.equals("false"))
+                    {
+                    code = code +"MOV\t"+$Identificador.text+",'"+$auxOp.text+"'\n";
+                    }
+                    else
+                    {
+                    code = code +"MOV\t"+$Identificador.text+","+$auxOp.text+"\n";
+                    }
                 }
                 else
                 {
@@ -123,6 +151,7 @@ operacion :  Identificador Igual
                if($operacionAritmetica.valores[2] != null)
                {
                    mapa.modificarSimbolo(new Simbolo($Identificador.text, Integer.parseInt($operacionAritmetica.valores[2] + "")));
+                    code = code + "MOV\t"+$Identificador.text+",EAX\n\n";
                }
             }
             else
@@ -153,15 +182,31 @@ operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Ident
                 {
                     case "+" -> {
                         $valores[2] = v1 + v2;
+                        code = code + "\t;SUMA\n"+
+                              "MOV\tEAX,"+$auxOp.text+
+                              "\nIADD\t EAX,"+$Identificador.text+"\n";
+
                     }
                     case "-" -> {
                         $valores[2] = v1 - v2;
+                        code = code + "\t;RESTA\n"+
+                              "MOV\tEAX,"+$auxOp.text+
+                              "\nISUB\t EAX,"+$Identificador.text+"\n";
+
                     }
                     case "*" -> {
                         $valores[2] = v1 * v2;
+                        code=code + "\t;MULTIPLICACION\n"+
+                                    "MOV\tEAX,"+$auxOp.text+
+                                    "\nMOV\t EBX,"+$Identificador.text+"\n"+
+                                     "IMUL\tEBX\n";
                     }
                     default -> {
                         $valores[2] = v1 / v2;
+                         code=code + "\t;DIVISION\n"+
+                                    "MOV\tEAX,"+$auxOp.text+
+                                    "\nMOV\t EBX,"+$Identificador.text+"\n"+
+                                     "IDIV\tEBX\n";
                     }
                 }
             }
@@ -190,20 +235,36 @@ operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Ident
         int v2 = Integer.parseInt($Digitos.text);
         String op = $OperadorAritmetico.text;
         switch(op)
-        {
-            case "+" -> {
-                $valores[2] = v1 + v2;
-            }
-            case "-" -> {
-                $valores[2] = v1 - v2;
-            }
-            case "*" -> {
-                $valores[2] = v1 * v2;
-            }
-            default -> {
-                $valores[2] = v1 / v2;
-            }
-        }
+                        {
+                            case "+" -> {
+                                $valores[2] = v1 + v2;
+                                code = code + "\t;SUMA\n"+
+                                      "MOV\tEAX,"+$auxOp.text+
+                                      "\nIADD\t EAX,"+$Digitos.text+"\n";
+
+                            }
+                            case "-" -> {
+                                $valores[2] = v1 - v2;
+                                code = code + "\t;RESTA\n"+
+                                      "MOV\tEAX,"+$auxOp.text+
+                                      "\nISUB\t EAX,"+$Digitos.text+"\n";
+
+                            }
+                            case "*" -> {
+                                $valores[2] = v1 * v2;
+                                code=code + "\t;MULTIPLICACION\n"+
+                                            "MOV\tEAX,"+$auxOp.text+
+                                            "\nMOV\t EBX,"+$Digitos.text+"\n"+
+                                             "IMUL\tEBX\n";
+                            }
+                            default -> {
+                                $valores[2] = v1 / v2;
+                                 code=code + "\t;DIVISION\n"+
+                                            "MOV\tEAX,"+$auxOp.text+
+                                            "\nMOV\t EBX,"+$Digitos.text+"\n"+
+                                             "IDIV\tEBX\n";
+                            }
+                        }
     }
     else
     {
@@ -211,7 +272,13 @@ operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Ident
     }
 });
 
-imprimir : Print Identificador PuntoComa;
+imprimir : Print Identificador
+ {
+  code = code + "\t;IMPRIMIR\n"+
+                  "MOV\tAH,09H\n"
+                   +"LEA\tdx,"+$Identificador.text
+                  +"\nINT\t21H\n\n";
+ }PuntoComa;
 
 auxOp returns [Object identificador[]]:
 	Identificador {
