@@ -97,7 +97,7 @@ condicionIf : If{nIf++;} ParentesisA (
             }
             else
             {
-                code=code+"CMP "+$auxOp.text+","+$auxOpB.text+"\n";
+                code=code+"CMP\t"+$auxOp.text+","+$auxOpB.text+"\n";
             }
         }
     }) ParentesisB{code = code + "JNE\tETIQUETA_"+nIf+"\n";} LlaveA sentencias* LlaveB {code = code + "ETIQUETA_"+nIf+":\n\n";};
