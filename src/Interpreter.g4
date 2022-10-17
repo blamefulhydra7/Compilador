@@ -9,7 +9,7 @@ grammar Interpreter;
 
 @parser::members{
     public Mapa mapa = new Mapa();
-    private int tipoDato,nIf;
+    private int tipoDato,nJmp=1,nLabel=1;
     public String data = ".DATA\n\n", code = ".CODE\n\n"+ "Main\t PROC\n" + "\t  .STARTUP\n\n";
     String[] identificadorN = new String[2];
     int nId=0;
@@ -59,7 +59,7 @@ declaracion:
     })
     PuntoComa ;
 
-condicionIf : If{nIf++;} ParentesisA (
+condicionIf : If ParentesisA (
     auxOp
     {
         if(Integer.parseInt($auxOp.identificador[1] + "") > 0)
@@ -100,7 +100,42 @@ condicionIf : If{nIf++;} ParentesisA (
                 code=code+"CMP\t"+$auxOp.text+","+$auxOpB.text+"\n";
             }
         }
-    }) ParentesisB{code = code + "JNE\tETIQUETA_"+nIf+"\n";} LlaveA sentencias* LlaveB {code = code + "ETIQUETA_"+nIf+":\n\n";};
+    }) ParentesisB
+        LlaveA{
+        switch($OperadorLogico.text)
+        {
+            case "==" ->
+            {
+                code = code + "JNE\tETIQUETA_"+nJmp+"\n";
+                nJmp++;
+            }
+            case "!=" ->
+            {
+                 code = code + "JE\tETIQUETA_"+nJmp+"\n";
+                 nJmp++;
+            }
+            case ">=" ->
+            {
+                code = code + "JL\tETIQUETA_"+nJmp+"\n";
+                nJmp++;
+            }
+            case "<=" ->
+            {
+                code = code + "JG\tETIQUETA_"+nJmp+"\n";
+                nJmp++;
+            }
+            case "<" ->
+            {
+                code = code + "JNL\tETIQUETA_"+nJmp+"\n";
+                nJmp++;
+            }
+            case ">" ->
+            {
+                code = code + "JNG\tETIQUETA_"+nJmp+"\n";
+                nJmp++;
+            }
+        }
+    } sentencias* LlaveB {code = code + "ETIQUETA_"+nLabel+":\n\n";nLabel++;};
 
 operacion :  Identificador Igual
     (auxOp {
@@ -111,7 +146,8 @@ operacion :  Identificador Igual
                 if(Integer.parseInt($auxOp.identificador[1] + "") == 1)
                 {
                     mapa.modificarSimbolo(new Simbolo($Identificador.text, Integer.parseInt($auxOp.identificador[0] + "")));
-                    code = code +"MOV\t"+$Identificador.text+","+$auxOp.text+"\n";
+                    code = code +"MOV\t"+"EAX,"+$auxOp.text+"\n"+
+                    "MOV\t"+$Identificador.text+",EAX\n";
                 }
                 else
                 {
@@ -184,28 +220,29 @@ operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Ident
                         $valores[2] = v1 + v2;
                         code = code + "\t;SUMA\n"+
                               "MOV\tEAX,"+$auxOp.text+
-                              "\nIADD\t EAX,"+$Identificador.text+"\n";
+                              "\nIADD\tEAX,"+$Identificador.text+"\n";
 
                     }
                     case "-" -> {
                         $valores[2] = v1 - v2;
                         code = code + "\t;RESTA\n"+
                               "MOV\tEAX,"+$auxOp.text+
-                              "\nISUB\t EAX,"+$Identificador.text+"\n";
+                              "\nISUB\tEAX,"+$Identificador.text+"\n";
 
                     }
                     case "*" -> {
                         $valores[2] = v1 * v2;
                         code=code + "\t;MULTIPLICACION\n"+
-                                    "MOV\tEAX,"+$auxOp.text+
-                                    "\nMOV\t EBX,"+$Identificador.text+"\n"+
-                                     "IMUL\tEBX\n";
+                                    "MOV\tAX,"+$auxOp.text+
+                                    "\nMOV\tBX,"+$Identificador.text+"\n"+
+                                     "IMUL\tBX\n";
                     }
                     default -> {
                         $valores[2] = v1 / v2;
                          code=code + "\t;DIVISION\n"+
                                     "MOV\tEAX,"+$auxOp.text+
-                                    "\nMOV\t EBX,"+$Identificador.text+"\n"+
+                                    "\nCDQ"+
+                                    "\nMOV\tEBX,"+$Identificador.text+"\n"+
                                      "IDIV\tEBX\n";
                     }
                 }
@@ -240,28 +277,29 @@ operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Ident
                                 $valores[2] = v1 + v2;
                                 code = code + "\t;SUMA\n"+
                                       "MOV\tEAX,"+$auxOp.text+
-                                      "\nIADD\t EAX,"+$Digitos.text+"\n";
+                                      "\nIADD\tEAX,"+$Digitos.text+"\n";
 
                             }
                             case "-" -> {
                                 $valores[2] = v1 - v2;
                                 code = code + "\t;RESTA\n"+
                                       "MOV\tEAX,"+$auxOp.text+
-                                      "\nISUB\t EAX,"+$Digitos.text+"\n";
+                                      "\nISUB\tEAX,"+$Digitos.text+"\n";
 
                             }
                             case "*" -> {
                                 $valores[2] = v1 * v2;
                                 code=code + "\t;MULTIPLICACION\n"+
-                                            "MOV\tEAX,"+$auxOp.text+
-                                            "\nMOV\t EBX,"+$Digitos.text+"\n"+
-                                             "IMUL\tEBX\n";
+                                            "MOV\tAX,"+$auxOp.text+
+                                            "\nMOV\tBX,"+$Digitos.text+"\n"+
+                                             "IMUL\tBX\n";
                             }
                             default -> {
                                 $valores[2] = v1 / v2;
                                  code=code + "\t;DIVISION\n"+
                                             "MOV\tEAX,"+$auxOp.text+
-                                            "\nMOV\t EBX,"+$Digitos.text+"\n"+
+                                            "\nCDQ"+
+                                            "\nMOV\tEBX,"+$Digitos.text+"\n"+
                                              "IDIV\tEBX\n";
                             }
                         }

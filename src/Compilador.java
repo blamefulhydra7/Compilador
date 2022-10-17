@@ -26,7 +26,7 @@ public class Compilador extends JFrame implements ActionListener {
     InterpreterLexer lexer;
     ErrorCatcher errores;
     InterpreterParser producciones;
-
+    Boolean codInt=false;
     String codigo;
 
     public Compilador() {
@@ -201,7 +201,9 @@ public class Compilador extends JFrame implements ActionListener {
                 txtMensaje.setForeground(Color.red);
                 txtMensaje.setText(errores.getErrorInfo());
             } finally {
+
                 txtTokens.setText(lexer.tokens);
+                txtIntermedio.setText("");
             }
             return;
         }
@@ -227,26 +229,71 @@ public class Compilador extends JFrame implements ActionListener {
                 visitor.visit(tree);
                 txtMensaje.setText("Análisis correcto.");
                 txtMensaje.setForeground(Color.green);
+                codInt=true;
             } catch (ParseCancellationException ex) {
                 txtMensaje.setText(errores.getErrorInfo());
                 txtMensaje.setForeground(Color.red);
+
             } finally {
                 txtTokens.setText(lexer.tokens + "\n" + parser.mapa.imprimirMapa());
+
                 if (!parser.mapa.errores.equals("")) {
                     txtMensaje.setText(errores.getErrorInfo() + "\n" + parser.mapa.errores);
                     txtMensaje.setForeground(Color.red);
+                    codInt=false;
                 }
+                txtIntermedio.setText("");
             }
             return;
         }
+
         if (e.getSource() == mniCodigoIntermedio) {
-            if (txtPrograma.getText().equals("")) {
-                txtIntermedio.setForeground(Color.RED);
-                txtIntermedio.setText("NO SE INGRESO NUNGUN CODIGO");
-            } else {
-                txtIntermedio.setForeground(Color.BLACK);
-                txtIntermedio.setText(generadorCodigoIntermedio());
+            if (txtPrograma.getText().trim().equals("")) {
+                txtMensaje.setForeground(Color.red);
+                txtMensaje.setText("No escribió nada en el texto del programa.");
+                return;
             }
+            txtTokens.setText("");
+            txtMensaje.setText("");
+            errores.clean();
+            try {
+                CharStream in = CharStreams.fromString(txtPrograma.getText());
+                lexer = new InterpreterLexer(in);
+                lexer.removeErrorListeners();
+                tokens = new CommonTokenStream(lexer);
+                parser = new InterpreterParser(tokens);
+                parser.removeErrorListeners();
+                parser.addErrorListener(errores);
+                InterpreterParser.ReglaContext tree = parser.regla();
+                InterpreterBaseVisitor<Object> visitor = new InterpreterBaseVisitor<>();
+                visitor.visit(tree);
+                txtMensaje.setText("Análisis correcto.");
+                txtMensaje.setForeground(Color.green);
+                codInt=true;
+            } catch (ParseCancellationException ex) {
+                txtMensaje.setText(errores.getErrorInfo());
+                txtMensaje.setForeground(Color.red);
+                codInt=false;
+            } finally {
+                txtTokens.setText(lexer.tokens + "\n" + parser.mapa.imprimirMapa());
+
+                if (!parser.mapa.errores.equals("")) {
+                    txtMensaje.setText(errores.getErrorInfo() + "\n" + parser.mapa.errores);
+                    txtMensaje.setForeground(Color.red);
+                    codInt = false;
+                }
+                if(codInt) {
+
+                    txtIntermedio.setForeground(Color.BLACK);
+                    txtIntermedio.setText(generadorCodigoIntermedio());
+
+                }
+                else {
+                    txtIntermedio.setForeground(Color.RED);
+                    txtIntermedio.setText("No se pudo generar el codigo intermedio,\nhay errores en el codigo fuente");
+                }
+            }
+
 
         }
         if (e.getSource() == mniLimpiar) {
@@ -272,133 +319,5 @@ public class Compilador extends JFrame implements ActionListener {
         return codigo;
     }
 
-    public String getTipoVariable() {
-        CharStream interM = CharStreams.fromString(txtPrograma.getText());
-        lexer = new InterpreterLexer(interM);
-        lexer.removeErrorListeners();
-        tokens = new CommonTokenStream(lexer);
-        parser = new InterpreterParser(tokens);
-        producciones = new InterpreterParser(tokens);
-        InterpreterParser.ReglaContext tree2 = parser.regla();
-        InterpreterBaseVisitor<Object> visitor2 = new InterpreterBaseVisitor<>();
-        visitor2.visit(tree2);
-
-        String tipoDato;
-        /*for(int i=0;i<=8;i++) {
-            if ( --tipodeDato == "Boolean")
-            {
-                tipoDato() = "DB\t"+valor;
-            }
-            } else if (--tipodeDato == "Int")
-            {
-               if(valor == 0)
-                {
-                    valor = "?"
-                    tipoDato() = "DB\t"+valor;
-                }
-                else
-                {
-                    tipoDato() = "DB\t"+valor
-                }
-            }
-        */
-        return tipoDato = "Hola";
-    }
-
-    public String getProducciones() {
-        String produccion = "";
-        //Codigo prueba, el original esta comentado debajo de este
-
-        if (txtPrograma.getText().equals("if")) {
-            produccion = "\t;IF\n" + "If:";
-            //condicion a pensarse pero son uso de JMP, JPZ, JPE
-        } else if (txtPrograma.getText().equals("*")) {
-            produccion = "\t;MULTIPLICACION\n" +
-                    "MOV\tEAX,valor1" +
-                    "\nMOV\tEBX,valor2\n" +
-                    "IMUL\tEBX\n" +
-                    "MOV\tResultado,EAX\n\n";
-        } else if (txtPrograma.getText().equals("/")) {
-            produccion = "\t;DIVISION\n" +
-                    "MOV\tEAX,valor1" +
-                    "\nMOV\tEBX,valor2\n" +
-                    "IDIV\tEBX\n" +
-                    "MOV\tResultado,EAX\n\n";
-
-        } else if (txtPrograma.getText().equals("+")) {
-            produccion = "\t;SUMA\n" +
-                    "MOV\tEAX,valor1" +
-                    "\nIADD\tEAX,valor2\n" +
-                    "MOV\tResultado,EAX\n\n";
-        } else if (txtPrograma.getText().equals("-")) {
-            produccion = "\t;RESTA\n" +
-                    "MOV\tEAX,valor1" +
-                    "\nISUB\tEAX,valor2\n" +
-                    "MOV\tResultado,EAX\n\n";
-        } else if (txtPrograma.getText().equals("=")) {
-            produccion = "\t;ADJUDICACION DE VALOR\n" +
-                    "MOV\tECX,a\n\n";
-        } else if (txtPrograma.getText().equals("print") /*&& condiciones entreparentesis*/) {
-            produccion = "\t;IMPRIMIR\n" +
-                    "MOV\tAH,09H\n"
-                    + "LEA\tdx,texto"
-                    + "\nint\t21H\n\n";
-
-        }
-       /*
-       do {
-       if(tokenTipe.equals("if")&& condiciones entreparentesis)
-       {
-       produccion="\t;IF\n"+
-            condicion a pensarse pero son uso de JMP, JPZ, JPE
-       }
-       else if(tokenTipe.equals("*"))
-        {
-          produccion="\t;MULTIPLICACION\n"+
-            "MOV\tEAX,"+valor1
-            "\nMOV\t EBX,"+valor2+"\n"+
-             "IMUL\tEBX\n"+
-             "MOV\t"+Resultado+",EAX\n\n";
-        }
-        else if(tokenTipe.equals("/"))
-        {
-        produccion="\t;DIVISION\n"+
-            "MOV\tEAX,"+valor1
-            "\nMOV\t EBX,"+valor2+"\n"+
-             "IDIV\tEBX\n"+
-             "MOV\t"+Resultado+",EAX\n\n";
-
-        } else if(tokenTipe.equals("+"))
-        {
-        produccion="\t;SUMA\n"+
-            "MOV\tEAX,"+valor1
-            "\nIADD\t EAX,"+valor2+"\n"+
-             "MOV\t"+Resultado+",EAX\n\n";
-        }
-        else if(tokenTipe.equals("-"))
-        {
-        produccion="\t;RESTA\n"+
-            "MOV\tEAX,"+valor1
-            "\nISUB\t EAX,"+valor2+"\n"+
-             "MOV\t"+Resultado+",EAX\n\n";
-        }
-        else if(tokenTipe.equals("="))
-        {
-        PRODUCCION ="\t;ADJUDICACION DE VALOR\n"+
-            aun de pensarse se puede poner un switch case para asiganer desde EAX a EDX
-            produccion= "MOV\tECX,"+tokenName+"\n\n"
-        }
-        else if(tokenTipe.equals("print") && condiciones entreparentesis)
-        {
-            produccion="\t;IMPRIMIR\n"+
-            "MOV\tAH,09H\n"
-            +"LEA\tdx,"+texto
-            +"\nint\t21H\n\n";
-
-        }
-        while(tokensN<getTokenNames().length());
-        */
-        return produccion;
-    }
 
 }
