@@ -9,7 +9,7 @@ grammar Interpreter;
 
 @parser::members{
     public Mapa mapa = new Mapa();
-    private int tipoDato,nJmp=1,nLabel=1;
+    private int tipoDato,nJmp=0,nLabel=1;
     public String data = ".DATA\n\n", code = ".CODE\n\n"+ "Main\t PROC\n" + "\t  .STARTUP\n\n";
     String[] identificadorN = new String[2];
     int nId=0;
@@ -97,7 +97,7 @@ condicionIf : If ParentesisA (
             }
             else
             {
-                code=code+"CMP\t"+$auxOp.text+","+$auxOpB.text+"\n";
+                code=code+"MOV\tEAX,"+$auxOp.text+"\nCMP\tEAX,"+$auxOpB.text+"\n";
             }
         }
     }) ParentesisB
@@ -106,36 +106,43 @@ condicionIf : If ParentesisA (
         {
             case "==" ->
             {
-                code = code + "JNE\tETIQUETA_"+nJmp+"\n";
                 nJmp++;
+                code = code + "JNE\tETIQUETA_"+nJmp+"\n";
+
             }
             case "!=" ->
             {
-                 code = code + "JE\tETIQUETA_"+nJmp+"\n";
                  nJmp++;
+                 code = code + "JE\tETIQUETA_"+nJmp+"\n";
+
             }
             case ">=" ->
             {
-                code = code + "JL\tETIQUETA_"+nJmp+"\n";
                 nJmp++;
+                code = code + "JL\tETIQUETA_"+nJmp+"\n";
+
             }
             case "<=" ->
             {
-                code = code + "JG\tETIQUETA_"+nJmp+"\n";
                 nJmp++;
+                code = code + "JG\tETIQUETA_"+nJmp+"\n";
+
             }
             case "<" ->
             {
-                code = code + "JNL\tETIQUETA_"+nJmp+"\n";
                 nJmp++;
+                code = code + "JNL\tETIQUETA_"+nJmp+"\n";
+
             }
             case ">" ->
             {
-                code = code + "JNG\tETIQUETA_"+nJmp+"\n";
                 nJmp++;
+                code = code + "JNG\tETIQUETA_"+nJmp+"\n";
+
             }
         }
-    } sentencias* LlaveB {code = code + "ETIQUETA_"+nLabel+":\n\n";nLabel++;};
+    } sentencias* LlaveB {nLabel=nJmp;code = code + "ETIQUETA_"+nLabel+":\n\n";
+    nJmp--;};
 
 operacion :  Identificador Igual
     (auxOp {
