@@ -16,11 +16,11 @@ import java.nio.file.Files;
 
 public class Compilador extends JFrame implements ActionListener {
     JMenuBar barra;
-    JMenu mnArchivo, mnGramatica, mnScanner, mnParser, mnLimpiar, mnCodigoIntermedio;
-    JMenuItem mniAbrir, mniImprimirG, mniScan, mniParse, mniLimpiar, mniCodigoIntermedio;
-    JTextArea txtPrograma, txtTokens, txtMensaje, txtIntermedio;
-    JScrollPane scPrograma, scMensaje, scTokens, scIntermedio;
-    JLabel lblPrograma, lblLexico, lblMensaje, lblIntermedio;
+    JMenu mnArchivo, mnGramatica, mnScanner, mnParser, mnLimpiar, mnCodigoIntermedio, mnCodigoObjeto;
+    JMenuItem mniAbrir, mniImprimirG, mniScan, mniParse, mniLimpiar, mniCodigoIntermedio,mniCodigoObjeto;
+    JTextArea txtPrograma, txtTokens, txtMensaje, txtIntermedio, txtObjeto;
+    JScrollPane scPrograma, scMensaje, scTokens, scIntermedio, scObjeto;
+    JLabel lblPrograma, lblLexico, lblMensaje, lblIntermedio, lblObjeto;
     CommonTokenStream tokens;
     InterpreterParser parser;
     InterpreterLexer lexer;
@@ -38,7 +38,7 @@ public class Compilador extends JFrame implements ActionListener {
     }
 
     private void hazInterfaz() {
-        setSize(860, 650);
+        setSize(1135, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
@@ -73,6 +73,10 @@ public class Compilador extends JFrame implements ActionListener {
         mnLimpiar.setMnemonic('C');
         barra.add(mnCodigoIntermedio);
 
+        mnCodigoObjeto = new JMenu("Código Objeto");
+        mnLimpiar.setMnemonic('O');
+        barra.add(mnCodigoObjeto);
+
         mniAbrir = new JMenuItem("Abrir archivo");
         mnArchivo.add(mniAbrir);
 
@@ -91,6 +95,9 @@ public class Compilador extends JFrame implements ActionListener {
         mniCodigoIntermedio = new JMenuItem("Generar código intermedio");
         mnCodigoIntermedio.add(mniCodigoIntermedio);
 
+        mniCodigoObjeto = new JMenuItem("Generar código objeto");
+        mnCodigoObjeto.add(mniCodigoObjeto);
+
         lblPrograma = new JLabel("Programa:");
         lblPrograma.setBounds(30, 15, 100, 15);
         add(lblPrograma);
@@ -103,6 +110,10 @@ public class Compilador extends JFrame implements ActionListener {
         lblIntermedio.setBounds(570, 15, 130, 15);
         add(lblIntermedio);
 
+        lblObjeto = new JLabel("Codigo Objeto");
+        lblObjeto.setBounds(840, 15, 130, 15);
+        add(lblObjeto);
+
         lblMensaje = new JLabel("Output:");
         lblMensaje.setBounds(30, 435, 100, 15);
         add(lblMensaje);
@@ -114,7 +125,7 @@ public class Compilador extends JFrame implements ActionListener {
         txtMensaje = new JTextArea();
         txtMensaje.setEditable(false);
         scMensaje = new JScrollPane(txtMensaje);
-        scMensaje.setBounds(30, 450, 790, 100);
+        scMensaje.setBounds(30, 450, 1060, 120);
 
         txtTokens = new JTextArea();
         txtTokens.setEditable(false);
@@ -126,6 +137,12 @@ public class Compilador extends JFrame implements ActionListener {
         scIntermedio = new JScrollPane(txtIntermedio);
         scIntermedio.setBounds(570, 30, 250, 400);
 
+        txtObjeto = new JTextArea();
+        txtObjeto.setEditable(false);
+        scObjeto = new JScrollPane(txtObjeto);
+        scObjeto.setBounds(840, 30, 250, 400);
+
+        add(scObjeto);
         add(scIntermedio);
         add(scPrograma);
         add(scMensaje);
@@ -139,6 +156,7 @@ public class Compilador extends JFrame implements ActionListener {
         mniAbrir.addActionListener(this);
         mniImprimirG.addActionListener(this);
         mniCodigoIntermedio.addActionListener(this);
+        mniCodigoObjeto.addActionListener(this);
     }
 
     @Override
@@ -295,6 +313,10 @@ public class Compilador extends JFrame implements ActionListener {
             }
 
 
+        }
+        if (e.getSource() == mniCodigoObjeto) {
+            txtObjeto.setText("Hola, soy el campo de codigo objeto \n" +
+                    "Se necesita programa aun mi parte");
         }
         if (e.getSource() == mniLimpiar) {
             txtPrograma.setText("");
