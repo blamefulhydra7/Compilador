@@ -12,12 +12,13 @@ import javax.swing.*;
     CDQ = 11010100 00001010
 
     A investigar...
-    .MODEL small, DW, DB, .CODE, Main PROC, .STARTUP, Etiquetas, Main ENDP, JNE, JE, JL, JG, JNL, JNG 
+    .MODEL small, DW, DB, .CODE, Main PROC, .STARTUP, Etiquetas, Main ENDP, JNE, JE, JL, JG, JNL, JNG
 */
 
 public class Main extends JFrame {
     public static void main(String[] args) {
-        String numero = "5";
+        new Compilador();
+        String numero = "1000";
         System.out.println(Integer.toBinaryString(Integer.parseInt(numero)));
     }
 }

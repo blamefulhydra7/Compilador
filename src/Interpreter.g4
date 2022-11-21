@@ -2,6 +2,7 @@ grammar Interpreter;
 @parser::header{
 	import recursos.Simbolo;
 	import recursos.Mapa;
+	import recursos.Conversor;
 }
 @lexer::members{
 	public String tokens = "\tTokens\n";
@@ -9,10 +10,11 @@ grammar Interpreter;
 
 @parser::members{
     public Mapa mapa = new Mapa();
-    private int tipoDato,nJmp=0,nLabel=1;
-    public String data = ".DATA\n\n", code = ".CODE\n\n"+ "Main\t PROC\n" + "\t  .STARTUP\n\n";
-    String[] identificadorN = new String[2];
-    int nId=0;
+    private int tipoDato,nJmp=0, nLabel=1, nId=0;
+    public String data = ".DATA\n\n", code = ".CODE\n\nMain\t PROC\n\t  .STARTUP\n\n";
+    public String binData = "", binCode = "";
+    private String[] identificadorN = new String[2];
+    private Conversor conversor = new Conversor();
 }
 
 regla : sentencias+ EOF;
@@ -70,8 +72,14 @@ condicionIf : If ParentesisA (
             }
             else
             {
-                code=code+"MOV\tEAX,"+$auxOp.text+
-                "\nCMP\t"+$auxOp.text+",EAX\n";
+                nJmp++;
+                code = code + "MOV\tEAX, 1" +
+                "\nCMP\tEAX, " + $auxOp.text + "\n" +
+                "JNE\tETIQUETA_" + nJmp + "\n";
+
+                binCode = binCode + "11000111 11000000 00000001; MOV EAX, 1 (r/m32, imm32)\n"
+                                  + "10000001 11000000 " + ($auxOp.text.equals("true") ? "00000001" : "00000000") + "; CMP EAX, " + $auxOp.text + " (r/m32, imm32)\n"
+                                  + "00001111 10000101 LABEL PENDIENTE; JNE ETIQUETA_" + nJmp + "\n";
             }
 
         }
@@ -97,7 +105,11 @@ condicionIf : If ParentesisA (
             }
             else
             {
-                code=code+"MOV\tEAX,"+$auxOp.text+"\nCMP\tEAX,"+$auxOpB.text+"\n";
+                code = code + "MOV\tEAX, " + $auxOp.text
+                            + "\nCMP\tEAX, " + $auxOpB.text + "\n";
+
+                binCode = binCode + "11000111 11000000 " + conversor.convertBinario($auxOp.text) + "; MOV EAX, " + $auxOp.text + " (r/m32, imm32)\n"
+                                  + "10000001 11000000 " + conversor.convertBinario($auxOpB.text) + "; CMP\tEAX, " + $auxOpB.text + "\n";
             }
         }
     }) ParentesisB
@@ -108,37 +120,37 @@ condicionIf : If ParentesisA (
             {
                 nJmp++;
                 code = code + "JNE\tETIQUETA_"+nJmp+"\n";
-
+                binCode = binCode + "00001111 10000101 LABEL PENDIENTE; JNE ETIQUETA_" + nJmp + "\n";
             }
             case "!=" ->
             {
                  nJmp++;
-                 code = code + "JE\tETIQUETA_"+nJmp+"\n";
-
+                 code = code + "JE\tETIQUETA_" + nJmp + "\n";
+                 binCode = binCode + "00001111 10000100 LABEL PENDIENTE; JE ETIQUETA_" + nJmp + "\n";
             }
             case ">=" ->
             {
                 nJmp++;
-                code = code + "JL\tETIQUETA_"+nJmp+"\n";
-
+                code = code + "JL\tETIQUETA_" + nJmp + "\n";
+                binCode = binCode + "00001111 10001100 LABEL PENDIENTE; JL ETIQUETA_" + nJmp + "\n";
             }
             case "<=" ->
             {
                 nJmp++;
-                code = code + "JG\tETIQUETA_"+nJmp+"\n";
-
+                code = code + "JG\tETIQUETA_" + nJmp + "\n";
+                binCode = binCode + "00001111 10001111 LABEL PENDIENTE; JG ETIQUETA_" + nJmp + "\n";
             }
             case "<" ->
             {
                 nJmp++;
                 code = code + "JNL\tETIQUETA_"+nJmp+"\n";
-
+                binCode = binCode + "00001111 10001101 LABEL PENDIENTE; JNL ETIQUETA_" + nJmp + "\n";
             }
             case ">" ->
             {
                 nJmp++;
                 code = code + "JNG\tETIQUETA_"+nJmp+"\n";
-
+                binCode = binCode + "00001111 10001110 LABEL PENDIENTE; JNG ETIQUETA_" + nJmp + "\n";
             }
         }
     } sentencias* LlaveB {nLabel=nJmp;code = code + "ETIQUETA_"+nLabel+":\n\n";
@@ -153,8 +165,11 @@ operacion :  Identificador Igual
                 if(Integer.parseInt($auxOp.identificador[1] + "") == 1)
                 {
                     mapa.modificarSimbolo(new Simbolo($Identificador.text, Integer.parseInt($auxOp.identificador[0] + "")));
-                    code = code +"MOV\t"+"EAX,"+$auxOp.text+"\n"+
-                    "MOV\t"+$Identificador.text+",EAX\n";
+                    code = code + "MOV\t" + "EAX," + $auxOp.text + "\n"+
+                    "MOV\t" + $Identificador.text + ",EAX\n";
+
+                    binCode = binCode + "11000111 11000000 " + conversor.convertBinario($auxOp.text) + "; MOV EAX, " + $auxOp.text + " (r/m32, imm32)\n"
+                                      + "10001001 VARIABLES PENDIENTES 11000000; MOV " + $Identificador.text + ", EAX (r/m32, r32)\n";
                 }
                 else
                 {
@@ -166,14 +181,9 @@ operacion :  Identificador Igual
                 if(Integer.parseInt($auxOp.identificador[1] + "") == 2)
                 {
                     mapa.modificarSimbolo(new Simbolo($Identificador.text, Boolean.parseBoolean($auxOp.identificador[0] + "")));
-                    if($auxOp.text.equals("true") | $auxOp.text.equals("false"))
-                    {
-                    code = code +"MOV\t"+$Identificador.text+",'"+$auxOp.text+"'\n";
-                    }
-                    else
-                    {
-                    code = code +"MOV\t"+$Identificador.text+","+$auxOp.text+"\n";
-                    }
+                    code = code + "MOV\t" + $Identificador.text + "," + $auxOp.text + "\n";
+
+                    binCode = binCode + "11000111 VARIABLES PENDIENTES " + ($auxOp.text.equals("true") ? "00000001" : "00000000") + "; MOV " + $Identificador.text + ", " + $auxOp.text + " (r/m32, imm32)\n";
                 }
                 else
                 {
@@ -194,7 +204,9 @@ operacion :  Identificador Igual
                if($operacionAritmetica.valores[2] != null)
                {
                    mapa.modificarSimbolo(new Simbolo($Identificador.text, Integer.parseInt($operacionAritmetica.valores[2] + "")));
-                    code = code + "MOV\t"+$Identificador.text+",EAX\n\n";
+                   code = code + "MOV\t" + $Identificador.text + ", EAX\n\n";
+
+                   binCode = binCode + "10001001 00000000; "
                }
             }
             else
