@@ -26,7 +26,7 @@ public class Compilador extends JFrame implements ActionListener {
     InterpreterLexer lexer;
     ErrorCatcher errores;
     InterpreterParser producciones;
-    Boolean codInt=false;
+    Boolean codInt=false, codObj=false;
     String codigo;
 
     public Compilador() {
@@ -247,7 +247,7 @@ public class Compilador extends JFrame implements ActionListener {
                 visitor.visit(tree);
                 txtMensaje.setText("Análisis correcto.");
                 txtMensaje.setForeground(Color.green);
-                codInt=true;
+                codInt = true;
             } catch (ParseCancellationException ex) {
                 txtMensaje.setText(errores.getErrorInfo());
                 txtMensaje.setForeground(Color.red);
@@ -258,7 +258,7 @@ public class Compilador extends JFrame implements ActionListener {
                 if (!parser.mapa.errores.equals("")) {
                     txtMensaje.setText(errores.getErrorInfo() + "\n" + parser.mapa.errores);
                     txtMensaje.setForeground(Color.red);
-                    codInt=false;
+                    codInt = false;
                 }
                 txtIntermedio.setText("");
             }
@@ -287,11 +287,11 @@ public class Compilador extends JFrame implements ActionListener {
                 visitor.visit(tree);
                 txtMensaje.setText("Análisis correcto.");
                 txtMensaje.setForeground(Color.green);
-                codInt=true;
+                codInt = true;
             } catch (ParseCancellationException ex) {
                 txtMensaje.setText(errores.getErrorInfo());
                 txtMensaje.setForeground(Color.red);
-                codInt=false;
+                codInt = false;
             } finally {
                 txtTokens.setText(lexer.tokens + "\n" + parser.mapa.imprimirMapa());
 
@@ -300,13 +300,12 @@ public class Compilador extends JFrame implements ActionListener {
                     txtMensaje.setForeground(Color.red);
                     codInt = false;
                 }
-                if(codInt) {
+                if (codInt) {
 
                     txtIntermedio.setForeground(Color.BLACK);
                     txtIntermedio.setText(generadorCodigoIntermedio());
 
-                }
-                else {
+                } else {
                     txtIntermedio.setForeground(Color.RED);
                     txtIntermedio.setText("No se pudo generar el codigo intermedio,\nhay errores en el codigo fuente");
                 }
@@ -315,8 +314,50 @@ public class Compilador extends JFrame implements ActionListener {
 
         }
         if (e.getSource() == mniCodigoObjeto) {
-            txtObjeto.setText("Hola, soy el campo de codigo objeto \n" +
-                    "Se necesita programa aun mi parte");
+            if (txtPrograma.getText().trim().equals("")) {
+                txtMensaje.setForeground(Color.red);
+                txtMensaje.setText("No escribió nada en el texto del programa.");
+                return;
+            }
+            txtTokens.setText("");
+            txtMensaje.setText("");
+            errores.clean();
+            try {
+                CharStream in = CharStreams.fromString(txtPrograma.getText());
+                lexer = new InterpreterLexer(in);
+                lexer.removeErrorListeners();
+                tokens = new CommonTokenStream(lexer);
+                parser = new InterpreterParser(tokens);
+                parser.removeErrorListeners();
+                parser.addErrorListener(errores);
+                InterpreterParser.ReglaContext tree = parser.regla();
+                InterpreterBaseVisitor<Object> visitor = new InterpreterBaseVisitor<>();
+                visitor.visit(tree);
+                txtMensaje.setText("Análisis correcto.");
+                txtMensaje.setForeground(Color.green);
+                codObj = true;
+            } catch (ParseCancellationException ex) {
+                txtMensaje.setText(errores.getErrorInfo());
+                txtMensaje.setForeground(Color.red);
+                codObj = false;
+            } finally {
+                txtTokens.setText(lexer.tokens + "\n" + parser.mapa.imprimirMapa());
+
+                if (!parser.mapa.errores.equals("")) {
+                    txtMensaje.setText(errores.getErrorInfo() + "\n" + parser.mapa.errores);
+                    txtMensaje.setForeground(Color.red);
+                    codObj = false;
+                }
+                if (codObj) {
+
+                    txtObjeto.setForeground(Color.BLACK);
+                    txtObjeto.setText(generadorCodigoObjeto());
+
+                } else {
+                    txtObjeto.setForeground(Color.RED);
+                    txtObjeto.setText("ERROR: NO BINARY CODE CAUSE TO NOT SOURCE CODE");
+                }
+            }
         }
         if (e.getSource() == mniLimpiar) {
             txtPrograma.setText("");
@@ -328,8 +369,8 @@ public class Compilador extends JFrame implements ActionListener {
             mnCodigoIntermedio.setEnabled(true);
         }
 
-    }
 
+    }
     public String generadorCodigoIntermedio() {
 
 
