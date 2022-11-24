@@ -12,7 +12,10 @@ grammar Interpreter;
     public Mapa mapa = new Mapa();
     private int tipoDato,nJmp=0, nLabel=1, nId=0;
     public String data = ".DATA\n\n", code = ".CODE\n\nMain\t PROC\n\t  .STARTUP\n\n";
-    public String binData = "", binCode = "";
+    public String binData = "00101110 01100100 01100001 01110100 01100001\n",
+    binCode = "00101110 01100011 01101111 01100100 01100101\n
+    01001101 01100001 01101001 01101110 00100000 01010000 01110010 01101111 01100011\n
+    00101110 01110011 01110100 01100001 01110010 01110100 01110101 01110000\n";
     private String[] identificadorN = new String[2];
     private Conversor conversor = new Conversor();
 }
@@ -33,6 +36,8 @@ declaracion:
             else
             {
                     data = data + $Identificador.text + "\tDW\t"+$Digitos.text+"\n";
+                    binData = binData + "(declaracion de la variable o espacio de memoria en el momento)"
+                    +"00000000 00000000"+conversor.convertBinario($Digitos.text);
 
             }
         }
@@ -51,6 +56,16 @@ declaracion:
             else
             {
                 data = data + $Identificador.text + "\tDB\t"+$Bools.text+"\n";
+                if($Bools.text.equals("true"))
+                {
+                    binData = binData + "(declaracion de la variable o espacio de memoria en el momento)"
+                                        +"00000000 "+"1";
+                }
+                else if($Bools.text.equals("false"))
+                {
+                    binData = binData + "(declaracion de la variable o espacio de memoria en el momento)"
+                                           +"00000000 "+"0";
+                }
 
             }
         }
@@ -335,6 +350,9 @@ imprimir : Print Identificador
                   "MOV\tAH,09H\n"
                    +"LEA\tdx,"+$Identificador.text
                   +"\nINT\t21H\n\n";
+  binCode = binCode +"11000111 11001000 00001001\n+
+                      "10001101 11010"+"binario del identificador\n"+
+                       "01001100 00100001";
  }PuntoComa;
 
 auxOp returns [Object identificador[]]:

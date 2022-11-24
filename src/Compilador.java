@@ -340,6 +340,16 @@ public class Compilador extends JFrame implements ActionListener {
                         + "Main\t ENDP";
         return codigo;
     }
+    public String generadorCodigoObjeto() {
+
+
+        codigo =
+                "\t 00101110 01101101 01101111 01100100 01100101 01101100 00100000 01110011 01101101 01100001 01101100 01101100\n"
+                        + parser.binData + "\n" + "\n"
+                        + parser.binCode + "\n"
+                        + "01001101 01100001 01101001 01101110 00100000 01000101 01101110 01100100 01010000 01110010 01101111 01100011";
+        return codigo;
+    }
 
 
 }
