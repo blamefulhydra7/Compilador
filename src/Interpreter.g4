@@ -12,10 +12,9 @@ grammar Interpreter;
     public Mapa mapa = new Mapa();
     private int tipoDato,nJmp=0, nLabel=1, nId=0;
     public String data = ".DATA\n\n", code = ".CODE\n\nMain\t PROC\n\t  .STARTUP\n\n";
-    public String binData = "00101110 01100100 01100001 01110100 01100001\n",
-    binCode = "00101110 01100011 01101111 01100100 01100101\n"+
-    "01001101 01100001 01101001 01101110 00100000 01010000 01110010 01101111 01100011\n"+
-    "00101110 01110011 01110100 01100001 01110010 01110100 01110101 01110000\n";
+    public String binCode = ";.CODE\n00101110 01100011 01101111 01100100 01100101\n\n"+
+    ";Main PROC\n01001101 01100001 01101001 01101110 00100000 01010000 01110010 01101111 01100011\n\n"+
+    ";.STARTUP\n00101110 01110011 01110100 01100001 01110010 01110100 01110101 01110000\n\n";
     private String[] identificadorN = new String[2];
     private Conversor conversor = new Conversor();
 }
@@ -36,8 +35,6 @@ declaracion:
             else
             {
                     data = data + $Identificador.text + "\tDW\t"+$Digitos.text+"\n";
-                    binData = binData + "(declaracion de la variable o espacio de memoria en el momento)"
-                    +"00000000 00000000"+conversor.convertBinario($Digitos.text);
 
             }
         }
@@ -56,17 +53,6 @@ declaracion:
             else
             {
                 data = data + $Identificador.text + "\tDB\t"+$Bools.text+"\n";
-                if($Bools.text.equals("true"))
-                {
-                    binData = binData + "(declaracion de la variable o espacio de memoria en el momento)"
-                                        +"00000000 "+"1";
-                }
-                else if($Bools.text.equals("false"))
-                {
-                    binData = binData + "(declaracion de la variable o espacio de memoria en el momento)"
-                                           +"00000000 "+"0";
-                }
-
             }
         }
         else
@@ -92,9 +78,9 @@ condicionIf : If ParentesisA (
                 "\nCMP\tEAX, " + $auxOp.text + "\n" +
                 "JNE\tETIQUETA_" + nJmp + "\n";
 
-                binCode = binCode + "11000111 11000000 00000001; MOV EAX, 1 (r/m32, imm32)\n"
-                                  + "10000001 11000000 " + ($auxOp.text.equals("true") ? "00000001" : "00000000") + "; CMP EAX, " + $auxOp.text + " (r/m32, imm32)\n"
-                                  + "00001111 10000101 LABEL PENDIENTE; JNE ETIQUETA_" + nJmp + "\n";
+                binCode = binCode + "; MOV EAX, 1 (r/m32, imm32)\n11000111 11000000 00000001\n\n"
+                                  + "; CMP EAX, " + $auxOp.text + " (r/m32, imm32)\n" + "10000001 11000000 " + ($auxOp.text.equals("true") ? "00000001\n\n" : "00000000\n\n")
+                                  + "; JNE ETIQUETA_" + nJmp + "\n" + "00001111 10000101\n\n" ;
             }
 
         }
@@ -123,8 +109,8 @@ condicionIf : If ParentesisA (
                 code = code + "MOV\tEAX, " + $auxOp.text
                             + "\nCMP\tEAX, " + $auxOpB.text + "\n";
 
-                binCode = binCode + "11000111 11000000 " + conversor.convertBinario($auxOp.text) + "; MOV EAX, " + $auxOp.text + " (r/m32, imm32)\n"
-                                  + "10000001 11000000 " + conversor.convertBinario($auxOpB.text) + "; CMP\tEAX, " + $auxOpB.text + "\n";
+                binCode = binCode + "; MOV EAX, " + $auxOp.text + " (r/m32, imm32)\n" + "11000111 11000000 " + ((mapa.existe($auxOp.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOp.text).getValor()) : conversor.convertBinario($auxOp.text)) + "\n\n"
+                                  + "; CMP EAX, " + $auxOpB.text + "\n" + "10000001 11000000 " + ((mapa.existe($auxOpB.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOpB.text).getValor()) : conversor.convertBinario($auxOpB.text)) + "\n\n";
             }
         }
     }) ParentesisB
@@ -135,41 +121,46 @@ condicionIf : If ParentesisA (
             {
                 nJmp++;
                 code = code + "JNE\tETIQUETA_"+nJmp+"\n";
-                binCode = binCode + "00001111 10000101 LABEL PENDIENTE; JNE ETIQUETA_" + nJmp + "\n";
+                binCode = binCode +  ";JNE ETIQUETA_" + nJmp + "\n" + "00001111 10000101 " + conversor.convertBinario(nJmp) + "\n\n";
             }
             case "!=" ->
             {
                  nJmp++;
                  code = code + "JE\tETIQUETA_" + nJmp + "\n";
-                 binCode = binCode + "00001111 10000100 LABEL PENDIENTE; JE ETIQUETA_" + nJmp + "\n";
+                 binCode = binCode + "; JE ETIQUETA_" + nJmp + "\n" + "00001111 10000100 " + conversor.convertBinario(nJmp) + "\n\n";
             }
             case ">=" ->
             {
                 nJmp++;
                 code = code + "JL\tETIQUETA_" + nJmp + "\n";
-                binCode = binCode + "00001111 10001100 LABEL PENDIENTE; JL ETIQUETA_" + nJmp + "\n";
+                binCode = binCode + "; JL ETIQUETA_" + nJmp + "\n" + "00001111 10001100 " + conversor.convertBinario(nJmp) + "\n\n";
             }
             case "<=" ->
             {
                 nJmp++;
                 code = code + "JG\tETIQUETA_" + nJmp + "\n";
-                binCode = binCode + "00001111 10001111 LABEL PENDIENTE; JG ETIQUETA_" + nJmp + "\n";
+                binCode = binCode + "; JG ETIQUETA_" + nJmp + "\n" + "00001111 10001111 LABEL PENDIENTE" + conversor.convertBinario(nJmp) + "\n\n";
             }
             case "<" ->
             {
                 nJmp++;
                 code = code + "JNL\tETIQUETA_"+nJmp+"\n";
-                binCode = binCode + "00001111 10001101 LABEL PENDIENTE; JNL ETIQUETA_" + nJmp + "\n";
+                binCode = binCode + "; JNL ETIQUETA_" + nJmp + "\n" + "00001111 10001101 LABEL PENDIENTE" + conversor.convertBinario(nJmp) + "\n\n";
             }
             case ">" ->
             {
                 nJmp++;
                 code = code + "JNG\tETIQUETA_"+nJmp+"\n";
-                binCode = binCode + "00001111 10001110 LABEL PENDIENTE; JNG ETIQUETA_" + nJmp + "\n";
+                binCode = binCode + "; JNG ETIQUETA_" + nJmp + "\n" + "00001111 10001110 LABEL PENDIENTE" + conversor.convertBinario(nJmp) + "\n\n";
             }
         }
-    } sentencias* LlaveB {nLabel=nJmp;code = code + "ETIQUETA_"+nLabel+":\n\n";
-    nJmp--;};
+    } sentencias* LlaveB {
+        nLabel = nJmp;
+        code = code + "ETIQUETA_" + nLabel + ":\n\n";
+        binCode = binCode + ";ETIQUETA_" + nLabel + ":\n"
+                          + conversor.convertBinario(nLabel) + "\n\n";
+        nJmp--;
+        };
 
 operacion :  Identificador Igual
     (auxOp {
@@ -183,8 +174,8 @@ operacion :  Identificador Igual
                     code = code + "MOV\t" + "EAX," + $auxOp.text + "\n"+
                     "MOV\t" + $Identificador.text + ",EAX\n";
 
-                    binCode = binCode + "11000111 11000000 " + conversor.convertBinario($auxOp.text) + "; MOV EAX, " + $auxOp.text + " (r/m32, imm32)\n"
-                                      + "10001001 VARIABLES PENDIENTES 11000000; MOV " + $Identificador.text + ", EAX (r/m32, r32)\n";
+                    binCode = binCode + "; MOV EAX, " + $auxOp.text + " (r/m32, imm32)\n" + "11000111 11000000 " + ((mapa.existe($auxOp.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOp.text).getValor()) : conversor.convertBinario($auxOp.text)) + "\n\n"
+                                      + "; MOV " + $Identificador.text + ", EAX (r/m32, r32)\n" + "10001001 " + conversor.convertBinario(mapa.getSimbolo($Identificador.text).getValor()) + " 11000000\n\n";
                 }
                 else
                 {
@@ -198,7 +189,7 @@ operacion :  Identificador Igual
                     mapa.modificarSimbolo(new Simbolo($Identificador.text, Boolean.parseBoolean($auxOp.identificador[0] + "")));
                     code = code + "MOV\t" + $Identificador.text + "," + $auxOp.text + "\n";
 
-                    binCode = binCode + "11000111 VARIABLES PENDIENTES " + ($auxOp.text.equals("true") ? "00000001" : "00000000") + "; MOV " + $Identificador.text + ", " + $auxOp.text + " (r/m32, imm32)\n";
+                    binCode = binCode + "; MOV " + $Identificador.text + ", " + $auxOp.text + " (r/m32, imm32)\n" + "11000111 " + conversor.convertBinario("10" + nJmp) + ($auxOp.text.equals("true") ? "00000001" : "00000000") + "\n\n";
                 }
                 else
                 {
@@ -221,7 +212,7 @@ operacion :  Identificador Igual
                    mapa.modificarSimbolo(new Simbolo($Identificador.text, Integer.parseInt($operacionAritmetica.valores[2] + "")));
                    code = code + "MOV\t" + $Identificador.text + ", EAX\n\n";
 
-                   binCode = binCode + "10001001 00000000 ";
+                   binCode = binCode + "; MOV " + $Identificador.text + ", EAX (r/m32, r32)\n" + "10001001 " + conversor.convertBinario(mapa.getSimbolo($Identificador.text).getValor()) + " 11000000\n\n";
                }
             }
             else
@@ -254,14 +245,19 @@ operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Ident
                         $valores[2] = v1 + v2;
                         code = code + "\t;SUMA\n"+
                               "MOV\tEAX,"+$auxOp.text+
-                              "\nIADD\tEAX,"+$Identificador.text+"\n";
+                              "\nADD\tEAX,"+$Identificador.text+"\n";
 
+                        binCode = binCode + "; MOV EAX, " + $auxOp.text + " (r/m32, imm32)\n" + "11000111 11000000 " + ((mapa.existe($auxOp.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOp.text).getValor()) : conversor.convertBinario($auxOp.text)) + "\n\n"
+                                          + "; ADD EAX, " + $Identificador.text + " (r/m32, imm32)\n" + "01000011 11000000 " + conversor.convertBinario(mapa.getSimbolo($Identificador.text).getValor()) + "\n\n";
                     }
                     case "-" -> {
                         $valores[2] = v1 - v2;
                         code = code + "\t;RESTA\n"+
                               "MOV\tEAX,"+$auxOp.text+
-                              "\nISUB\tEAX,"+$Identificador.text+"\n";
+                              "\nSUB\tEAX,"+$Identificador.text+"\n";
+
+                        binCode = binCode + "; MOV EAX, " + $auxOp.text + " (r/m32, imm32)\n" + "11000111 11000000 " + ((mapa.existe($auxOp.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOp.text).getValor()) : conversor.convertBinario($auxOp.text)) + "\n\n"
+                                          + "; SUB EAX, " + $Identificador.text + " (r/m32, imm32)\n" + "01000001 11000000 " + conversor.convertBinario(mapa.getSimbolo($Identificador.text).getValor()) + "\n\n";
 
                     }
                     case "*" -> {
@@ -270,6 +266,10 @@ operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Ident
                                     "MOV\tAX,"+$auxOp.text+
                                     "\nMOV\tBX,"+$Identificador.text+"\n"+
                                      "IMUL\tBX\n";
+
+                        binCode = binCode + "; MOV AX, " + $auxOp.text + " (r/m16, imm16)\n" + "10111000 11000000 " + ((mapa.existe($auxOp.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOp.text).getValor()) : conversor.convertBinario($auxOp.text)) + "\n\n"
+                                          + "; MOV BX, " + $auxOp.text + " (r/m16, imm16)\n" + "10111000 11011011 " + conversor.convertBinario(mapa.getSimbolo($Identificador.text).getValor())  + "\n\n"
+                                          + "; IMUL " + $Identificador.text + " (imm16)\n" + "11110111 11000011\n\n";
                     }
                     default -> {
                         $valores[2] = v1 / v2;
@@ -278,6 +278,11 @@ operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Ident
                                     "\nCDQ"+
                                     "\nMOV\tEBX,"+$Identificador.text+"\n"+
                                      "IDIV\tEBX\n";
+
+                         binCode = binCode + ";MOV EAX, " + $auxOp.text + "(r/m32, imm32)\n" + "11000111 11000000 " + ((mapa.existe($auxOp.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOp.text).getValor()) : conversor.convertBinario($auxOp.text)) + "\n\n"
+                                           + ";CDQ\n\n" + "10011001\n\n"
+                                           + ";MOV EBX, " + $Identificador.text + " (r/m32, imm32)\n" + "11000111 11011011 " + conversor.convertBinario(mapa.getSimbolo($Identificador.text).getValor()) + "\n\n"
+                                           + ";IDIV EBX\n" + "11110111 11000011\n\n";
                     }
                 }
             }
@@ -306,37 +311,52 @@ operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Ident
         int v2 = Integer.parseInt($Digitos.text);
         String op = $OperadorAritmetico.text;
         switch(op)
-                        {
-                            case "+" -> {
-                                $valores[2] = v1 + v2;
-                                code = code + "\t;SUMA\n"+
-                                      "MOV\tEAX,"+$auxOp.text+
-                                      "\nIADD\tEAX,"+$Digitos.text+"\n";
+        {
+            case "+" -> {
+                $valores[2] = v1 + v2;
+                code = code + "\t;SUMA\n"+
+                      "MOV\tEAX,"+$auxOp.text+
+                      "\nADD\tEAX,"+$Digitos.text+"\n";
 
-                            }
-                            case "-" -> {
-                                $valores[2] = v1 - v2;
-                                code = code + "\t;RESTA\n"+
-                                      "MOV\tEAX,"+$auxOp.text+
-                                      "\nISUB\tEAX,"+$Digitos.text+"\n";
+                binCode = binCode + "; MOV EAX, " + $auxOp.text + " (r/m32, imm32)\n" + "11000111 11000000 " + ((mapa.existe($auxOp.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOp.text).getValor()) : conversor.convertBinario($auxOp.text)) + "\n\n"
+                                  + "; ADD EAX, " + $Digitos.text + " (r/m32, imm32)\n" + "01000011 11000000 " + conversor.convertBinario($Digitos.text) + "\n\n";
 
-                            }
-                            case "*" -> {
-                                $valores[2] = v1 * v2;
-                                code=code + "\t;MULTIPLICACION\n"+
-                                            "MOV\tAX,"+$auxOp.text+
-                                            "\nMOV\tBX,"+$Digitos.text+"\n"+
-                                             "IMUL\tBX\n";
-                            }
-                            default -> {
-                                $valores[2] = v1 / v2;
-                                 code=code + "\t;DIVISION\n"+
-                                            "MOV\tEAX,"+$auxOp.text+
-                                            "\nCDQ"+
-                                            "\nMOV\tEBX,"+$Digitos.text+"\n"+
-                                             "IDIV\tEBX\n";
-                            }
-                        }
+            }
+            case "-" -> {
+                $valores[2] = v1 - v2;
+                code = code + "\t;RESTA\n"+
+                      "MOV\tEAX,"+$auxOp.text+
+                      "\nISUB\tEAX,"+$Digitos.text+"\n";
+
+                binCode = binCode + "; MOV EAX, " + $auxOp.text + " (r/m32, imm32)\n" + "11000111 11000000 " + ((mapa.existe($auxOp.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOp.text).getValor()) : conversor.convertBinario($auxOp.text)) + "\n\n"
+                                  + "; SUB EAX, " + $Digitos.text + " (r/m32, imm32)\n" + "01000001 11000000 " + conversor.convertBinario($Digitos.text) + "\n\n";
+
+            }
+            case "*" -> {
+                $valores[2] = v1 * v2;
+                code=code + "\t;MULTIPLICACION\n"+
+                            "MOV\tAX,"+$auxOp.text+
+                            "\nMOV\tBX,"+$Digitos.text+"\n"+
+                            "IMUL\tBX\n";
+
+                binCode = binCode + "; MOV AX, " + $auxOp.text + " (r/m16, imm16)\n" + "10111000 11000000 " + ((mapa.existe($auxOp.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOp.text).getValor()) : conversor.convertBinario($auxOp.text)) + "\n\n"
+                                  + "; MOV BX, " + $auxOp.text + " (r/m16, imm16)\n" + "10111000 11011011 " + conversor.convertBinario($Digitos.text)  + "\n\n"
+                                  + "; IMUL " + $Identificador.text + " (imm16)\n" + "11110111 11000011\n\n";
+            }
+            default -> {
+                $valores[2] = v1 / v2;
+                 code=code + "\t;DIVISION\n"+
+                            "MOV\tEAX,"+$auxOp.text+
+                            "\nCDQ"+
+                            "\nMOV\tEBX,"+$Digitos.text+"\n"+
+                             "IDIV\tEBX\n";
+
+                 binCode = binCode + ";MOV EAX, " + $auxOp.text + "(r/m32, imm32)\n" + "11000111 11000000 " + ((mapa.existe($auxOp.text)) ? conversor.convertBinario(mapa.getSimbolo($auxOp.text).getValor()) : conversor.convertBinario($auxOp.text)) + "\n\n"
+                                   + ";CDQ\n\n" + "10011001\n\n"
+                                   + ";MOV EBX, " + $Digitos.text + " (r/m32, imm32)\n" + "11000111 11011011 " + conversor.convertBinario($Digitos.text) + "\n\n"
+                                   + ";IDIV EBX\n" + "11110111 11000011\n\n";
+            }
+        }
     }
     else
     {
@@ -346,13 +366,15 @@ operacionAritmetica returns [Object[] valores] : auxOp OperadorAritmetico (Ident
 
 imprimir : Print Identificador
  {
-  code = code + "\t;IMPRIMIR\n"+
-                  "MOV\tAH,09H\n"
-                   +"LEA\tdx,"+$Identificador.text
-                  +"\nINT\t21H\n\n";
-  binCode = binCode +"11000111 11001000 00001001\n"+
-                      "10001101 11010"+"binario del identificador\n"+
-                       "01001100 00100001";
+  code = code + "\t;IMPRIMIR\n" +
+                "MOV\tAH,09H\n" +
+                "LEA\tDX," + $Identificador.text +
+                "\nINT\t21H\n\n";
+
+  binCode = binCode + ";MOV AH, 09H\n 11000111 11001000 00001001\n\n"
+                    + ";MOV BX, " + $Identificador.text + " (r/m16, imm16)\n 10111000 11011011 " + conversor.convertBinario(mapa.getSimbolo($Identificador.text).getValor()) + "\n\n"
+                    + ";LEA DX, " + $Identificador.text + "\n 10001101 11010011\n\n"
+                    + ";INT 21H\n01001100 00100001\n\n";
  }PuntoComa;
 
 auxOp returns [Object identificador[]]:
